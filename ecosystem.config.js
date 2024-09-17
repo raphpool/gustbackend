@@ -12,7 +12,7 @@ module.exports = {
         interpreter: "/usr/bin/node",
         env: {
           PATH: "/home/ubuntu/GUSTBackend/venv/bin:$PATH",
-          PYTHONPATH: "/home/ubuntu/GUSTBackend/venv/lib/python3.x/site-packages",
+          PYTHONPATH: "/home/ubuntu/GUSTBackend/venv/lib/python3.12/site-packages",
           VIRTUAL_ENV: "/home/ubuntu/GUSTBackend/venv"
         },
         exec_mode: "fork",
