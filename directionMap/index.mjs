@@ -20,6 +20,9 @@ async function runDirectionMapWorkflow() {
     const tempFilePath = path.join('/tmp', 'forecast_data.json');
     writeFileSync(tempFilePath, JSON.stringify(forecastData));
 
+    // Define pythonScriptPath
+    const pythonScriptPath = path.join(__dirname, 'process_grib.py');
+
     // Run the Python script
     const pythonCommand = '/home/ubuntu/GUSTBackend/venv/bin/python3';
     exec(`${pythonCommand} ${pythonScriptPath} ${tempFilePath}`, (error, stdout, stderr) => {
