@@ -20,7 +20,7 @@ module.exports = {
       },
       {
         name: "speedMap",
-        script: "./speedMap/index.js",
+        script: "./speedMap/main.js",
         exec_mode: "fork",
         autorestart: false,
         // This won't auto-start, we'll use cron for this
