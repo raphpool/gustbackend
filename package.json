@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "moment-timezone": "^0.5.45",
+    "node-fetch": "^3.3.2",
+    "type": "module"
+  }
+}
+
+
