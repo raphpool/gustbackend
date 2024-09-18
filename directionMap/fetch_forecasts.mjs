@@ -103,13 +103,13 @@ async function fetchForecastData() {
 }
 
 // Execute the function and handle the promise
-fetchForecastData().then((responses) => {
-  appendToLog(`Fetch completed. Total forecasts: ${responses.length}`);
-  responses.forEach(response => {
-    appendToLog(`${response.timestamp}, fetched file ${response.forecastHour}`);
-  });
-}).catch((error) => {
-  appendToLog(`An error occurred: ${error.message}`);
-});
+//fetchForecastData().then((responses) => {
+//  appendToLog(`Fetch completed. Total forecasts: ${responses.length}`);
+ // responses.forEach(response => {
+   // appendToLog(`${response.timestamp}, fetched file ${response.forecastHour}`);
+  //});//
+//}).catch((error) => {
+  //appendToLog(`An error occurred: ${error.message}`);
+//});
 
 export { fetchForecastData };
