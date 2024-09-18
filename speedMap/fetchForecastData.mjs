@@ -1,7 +1,17 @@
 import fetch from 'node-fetch';
 import moment from 'moment-timezone';
+import fs from 'fs';
+
+function appendToLog(message) {
+  const logFile = '/home/ubuntu/gustbackend-fresh/directionMap/fetch_forecasts.log';
+  const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+  fs.appendFileSync(logFile, `${timestamp}: ${message}\n`);
+  console.log(message);
+}
 
 async function fetchForecastData() {
+  appendToLog("Starting fetchForecastData function");
+
   const baseURL = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25_1hr.pl';
   const variables = 'var_UGRD=on&var_VGRD=on&lev_20_m_above_ground=on';
   const subregion = '&subregion=&toplat=51.1&leftlon=-5.3&rightlon=9.6&bottomlat=41.3';
@@ -10,66 +20,96 @@ async function fetchForecastData() {
   const maxRequestsPerMinute = 110;
   const optimalTimeoutMs = (60 / maxRequestsPerMinute) * 1000;
 
-  const currentUTCHour = moment.utc().hour();
-  let currentCycleIndex = cycles.findIndex(cycle => parseInt(cycle) > currentUTCHour);
+  const currentUTCTime = moment.utc();
+  let currentCycleIndex = cycles.findIndex(cycle => parseInt(cycle) > currentUTCTime.hour());
   if (currentCycleIndex === -1) currentCycleIndex = 0;
-  currentCycleIndex = (currentCycleIndex - 1 + cycles.length) % cycles.length;
+  currentCycleIndex = (currentCycleIndex - 2 + cycles.length) % cycles.length; // Use the cycle before the most recent
 
-  const forecastHours = Array.from({length: 60}, (_, i) => `f${(i * 2 + 1).toString().padStart(3, '0')}`);
+  appendToLog(`Current UTC time: ${currentUTCTime.format()}, Using cycle index: ${currentCycleIndex}`);
 
-  async function attemptFetch(cycleIndex) {
-    const cycle = cycles[cycleIndex];
-    const dateStr = moment.utc().format('YYYYMMDD');
-    console.log(`Attempting to fetch forecasts for cycle: ${cycle}`);
-    let responses = [];
+  const cycle = cycles[currentCycleIndex];
+  let cycleDate = moment.utc(currentUTCTime).startOf('day').hour(parseInt(cycle));
 
-    for (const forecastHourStr of forecastHours) {
-      const forecastHour = parseInt(forecastHourStr.substring(1));
-      const forecastDate = moment.utc(`${dateStr} ${cycle}`, "YYYYMMDD HH").add(forecastHour, 'hours');
-      const forecastParisTime = forecastDate.clone().tz(parisTimeZone);
-      const parisHour = forecastParisTime.hour();
-      
-      if (parisHour < 6 || parisHour > 22) continue;
+  if (currentUTCTime.isBefore(cycleDate)) {
+    cycleDate.subtract(1, 'day');
+  }
 
-      const url = `${baseURL}?dir=%2Fgfs.${dateStr}%2F${cycle}%2Fatmos&file=gfs.t${cycle}z.pgrb2.0p25.${forecastHourStr}&${variables}${subregion}`;
+  appendToLog(`Cycle date: ${cycleDate.format()}`);
 
-      await new Promise(resolve => setTimeout(resolve, optimalTimeoutMs));
+  async function fetchForTimestamp(forecastHour) {
+    const forecastHourStr = `f${forecastHour.toString().padStart(3, '0')}`;
+    const forecastDate = cycleDate.clone().add(forecastHour, 'hours');
 
-      try {
-        console.log(`Fetching: ${url}`);
-        const forecastResponse = await fetch(url);
-        if (!forecastResponse.ok) {
-          console.log(`Fetch failed for URL: ${url} with status: ${forecastResponse.statusText}`);
-          continue;
-        }
+    const url = `${baseURL}?dir=%2Fgfs.${cycleDate.format('YYYYMMDD')}%2F${cycle}%2Fatmos&file=gfs.t${cycle}z.pgrb2.0p25.${forecastHourStr}&${variables}${subregion}`;
 
-        const arrayBuffer = await forecastResponse.arrayBuffer();
-        const base64EncodedResponse = Buffer.from(arrayBuffer).toString('base64');
-            
-        responses.push({
-          timestamp: `${forecastParisTime.format('YYYY-MM-DD HH:mm')} Paris Time`,
-          cycle: cycle,
-          forecastHour: forecastHourStr,
-          base64EncodedResponse,
-        });
-        console.log(`Successfully fetched forecast for ${forecastHourStr}`);
-      } catch (error) {
-        console.error(`Error fetching forecast for ${forecastHourStr}:`, error);
+    await new Promise(resolve => setTimeout(resolve, optimalTimeoutMs));
+
+    try {
+      appendToLog(`Fetching: ${url}`);
+      const forecastResponse = await fetch(url, { follow: 5 });
+      if (!forecastResponse.ok) {
+        appendToLog(`Fetch failed for URL: ${url} with status: ${forecastResponse.status} ${forecastResponse.statusText}`);
+        return null;
+      }
+
+      const arrayBuffer = await forecastResponse.arrayBuffer();
+      const base64EncodedResponse = Buffer.from(arrayBuffer).toString('base64');
+
+      appendToLog(`Successfully fetched forecast for ${forecastHourStr} (${forecastDate.format('YYYY-MM-DD HH:mm')} Paris Time)`);
+      return {
+        timestamp: forecastDate.tz(parisTimeZone).format('YYYY-MM-DD HH:mm'),
+        cycle: cycle,
+        forecastHour: forecastHourStr,
+        base64EncodedResponse,
+      };
+    } catch (error) {
+      appendToLog(`Error fetching forecast for ${forecastHourStr}: ${error.message}`);
+      return null;
+    }
+  }
+
+  let responses = [];
+  const startDate = moment.tz(cycleDate, parisTimeZone);
+
+  // Fetch data for all 10 days
+  for (let day = 0; day < 10; day++) {
+    let dayHours;
+    if (day < 5) {
+      dayHours = [6, 8, 10, 12, 14, 16, 18, 20, 22];
+    } else {
+      dayHours = Array.from({length: 17}, (_, i) => i + 6); // 6 to 22
+    }
+
+    for (const hour of dayHours) {
+      const forecastDate = moment(startDate).add(day, 'days').hour(hour).startOf('hour');
+      const forecastHour = forecastDate.diff(cycleDate, 'hours');
+
+      const response = await fetchForTimestamp(forecastHour);
+
+      if (response !== null) {
+        responses.push(response);
       }
     }
-    return responses;
   }
 
-  let responses = await attemptFetch(currentCycleIndex);
-  
-  if (responses.length === 0 && currentCycleIndex > 0) {
-    console.log("No forecasts found for current cycle. Trying previous cycle.");
-    currentCycleIndex = (currentCycleIndex - 1 + cycles.length) % cycles.length;
-    responses = await attemptFetch(currentCycleIndex);
-  }
+  appendToLog(`Total forecasts fetched: ${responses.length}`);
 
-  console.log(`Total forecasts fetched: ${responses.length}`);
+  // Log a summary of fetched forecasts
+  responses.forEach((response, index) => {
+    appendToLog(`Forecast ${index + 1}: ${response.timestamp} (Cycle: ${response.cycle}, Hour: ${response.forecastHour})`);
+  });
+
   return responses;
 }
+
+// Execute the function and handle the promise
+fetchForecastData().then((responses) => {
+  appendToLog(`Fetch completed. Total forecasts: ${responses.length}`);
+  responses.forEach(response => {
+    appendToLog(`${response.timestamp}, fetched file ${response.forecastHour}`);
+  });
+}).catch((error) => {
+  appendToLog(`An error occurred: ${error.message}`);
+});
 
 export { fetchForecastData };
