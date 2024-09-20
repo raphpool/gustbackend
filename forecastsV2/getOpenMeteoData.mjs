@@ -1,5 +1,5 @@
-const axios = require('axios');
-const { isWithinTimeRange, getWindDirection } = require('./utils');
+import axios from 'axios';
+import { isWithinTimeRange, getWindDirection } from './utils.mjs';
 
 const modelDetails = [
   { name: 'meteofrance_arome_france_hd', start: 0, end: 32 },
@@ -56,4 +56,4 @@ async function getOpenMeteoData({ currentSpotId, currentSpotLat, currentSpotLon 
   return forecasts;
 }
 
-module.exports = { getOpenMeteoData };
+export { getOpenMeteoData };

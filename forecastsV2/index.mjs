@@ -1,10 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const { fetchForecasts } = require('./fetchForecasts');
-const { getOpenMeteoData } = require('./getOpenMeteoData');
-const { getWorldTidesData } = require('./getWorldTidesData');
-const { processAndUpdateForecasts } = require('./processAndUpdateForecasts');
-const { updateSpotStatus } = require('./updateSpotStatus');
+import dotenv from 'dotenv';
+import express from 'express';
+import { fetchForecasts } from './fetchForecasts.mjs';
+import { getOpenMeteoData } from './getOpenMeteoData.mjs';
+import { getWorldTidesData } from './getWorldTidesData.mjs';
+import { processAndUpdateForecasts } from './processAndUpdateForecasts.mjs';
+import { updateSpotStatus } from './updateSpotStatus.mjs';
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -48,8 +50,8 @@ app.post('/webhook', authenticateApiKey, async (req, res) => {
 });
 
 // Start the server
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server is running on port 3000');
 });
 
 // Example usage (you'll need to implement a way to get this data, perhaps from Airtable)

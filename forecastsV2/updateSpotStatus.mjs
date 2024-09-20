@@ -1,4 +1,7 @@
-const axios = require('axios');
+import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const API_KEY = process.env.AIRTABLE_API_KEY;
 const BASE_ID = 'app3mlORKoXMPNhYn';
@@ -25,4 +28,4 @@ async function updateSpotStatus(currentSpotRecId, nextSpotRecId) {
   }
 }
 
-module.exports = { updateSpotStatus };
+export { updateSpotStatus };

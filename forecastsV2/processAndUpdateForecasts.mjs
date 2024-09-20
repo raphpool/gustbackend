@@ -1,5 +1,8 @@
-const axios = require('axios');
-const { getRelativeDirection } = require('./utils');
+import axios from 'axios';
+import dotenv from 'dotenv';
+import { getRelativeDirection } from './utils.mjs';
+
+dotenv.config();
 
 const API_KEY = process.env.AIRTABLE_API_KEY;
 const BASE_ID = 'app3mlORKoXMPNhYn';
@@ -107,4 +110,4 @@ async function processAndUpdateForecasts(spotData, existingForecasts, windForeca
   return outputRecords;
 }
 
-module.exports = { processAndUpdateForecasts };
+export { processAndUpdateForecasts };

@@ -1,4 +1,4 @@
-function isWithinTimeRange(date, modelName, hoursElapsed) {
+export function isWithinTimeRange(date, modelName, hoursElapsed) {
     let hour = new Date(date).getUTCHours();
     let isWithinHourRange = hour >= 6 && hour <= 22;
 
@@ -9,8 +9,8 @@ function isWithinTimeRange(date, modelName, hoursElapsed) {
     }
     return false;
 }
-  
-  function getWindDirection(degrees) {
+
+export function getWindDirection(degrees) {
     if (degrees >= 337.5 || degrees < 22.5) return 'North';
     if (degrees >= 22.5 && degrees < 67.5) return 'North-east';
     if (degrees >= 67.5 && degrees < 112.5) return 'East';
@@ -20,8 +20,8 @@ function isWithinTimeRange(date, modelName, hoursElapsed) {
     if (degrees >= 247.5 && degrees < 292.5) return 'West';
     return 'North-west';
 }
-  
-function isDaylightSavingTimeParis(date) {
+
+export function isDaylightSavingTimeParis(date) {
     // Typically, DST starts on the last Sunday in March and ends on the last Sunday in October for Paris
     const startDST = new Date(Date.UTC(date.getFullYear(), 2, 31)); // March 31st
     const endDST = new Date(Date.UTC(date.getFullYear(), 9, 31)); // October 31st
@@ -30,8 +30,8 @@ function isDaylightSavingTimeParis(date) {
     endDST.setUTCDate(endDST.getUTCDate() - endDST.getUTCDay());
     return date >= startDST && date < endDST;
 }
-  
-  function getRelativeDirection(spotDirection, windDirection) {
+
+export function getRelativeDirection(spotDirection, windDirection) {
     const matrix = {
         'North': {
             'North': 'onshore',
@@ -125,12 +125,4 @@ function isDaylightSavingTimeParis(date) {
         return 'unknown';
     }
     return matrix[spotDirection][windDirection];
-};
-  
-  module.exports = {
-    isWithinTimeRange,
-    getWindDirection,
-    isDaylightSavingTimeParis,
-    getRelativeDirection
-  };
-  
+}

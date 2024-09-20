@@ -1,5 +1,8 @@
-const axios = require('axios');
-const { isDaylightSavingTimeParis } = require('./utils');
+import axios from 'axios';
+import dotenv from 'dotenv';
+import { isDaylightSavingTimeParis } from './utils.mjs';
+
+dotenv.config();
 
 const WORLD_TIDES_API_KEY = process.env.WORLD_TIDES_API_KEY;
 
@@ -178,4 +181,4 @@ async function getWorldTidesData({ currentSpotId, currentSpotLat, currentSpotLon
   return tides;
 }
 
-module.exports = { getWorldTidesData };
+export { getWorldTidesData };
